@@ -54,7 +54,7 @@ bash shipyard deploy portfolio /tmp/portfolio.tar.gz <release-id>
 
 # Architecture
 
-Developer      │      ▼ Git Push      │      ▼ GitHub Actions      │      ▼ Build Artifact      │      ▼ Shipyard      │      ▼ Release Directory      │ Atomic Symlink Switch      │      ▼ Nginx      │      ▼ Production
+Developer      │      ▼ Git Push      │      ▼ GitHub Actions      │      ▼ Build Artifact      │      ▼ Shipyard      │      ▼ Release Directory      │   ▼ Atomic Symlink Switch      │      ▼ Nginx      │      ▼ Production
 
 Each deployment creates a new immutable release directory.
 
