@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/shipyard/lib/config.sh
+
+PROJECT="${1:-}"
+
+if [ -z "$PROJECT" ]; then
+  echo "Usage: shipyard status <project>"
+  exit 1
+fi
+
+load_project_config "$PROJECT"
+
+CURRENT_LINK="$PROJECT_DIR/current"
+RELEASES_DIR="$PROJECT_DIR/releases"
+
+echo "Project: $PROJECT_NAME"
+echo "Directory: $PROJECT_DIR"
+echo "Type: ${TYPE:-static}"
+echo "Keep releases: ${KEEP_RELEASES:-5}"
+echo ""
+
+if [ -L "$CURRENT_LINK" ]; then
+  echo "Current release:"
+  readlink -f "$CURRENT_LINK"
+else
+  echo "Current release: missing or not a symlink"
+fi
+
+echo ""
+echo "Release count:"
+find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l
+
+echo ""
+echo "Latest releases:"
+find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 5
+
+echo ""
+echo "Last logs:"
+tail -n 5 "/var/log/shipyard/$PROJECT.log" 2>/dev/null || true

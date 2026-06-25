@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_DIR="/etc/deploy-sites"
+
+echo "Projects:"
+
+for file in "$CONFIG_DIR"/*.conf; do
+  [ -e "$file" ] || exit 0
+  basename "$file" .conf
+done

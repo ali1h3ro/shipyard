@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/shipyard/lib/config.sh
+
+PROJECT="${1:-}"
+
+if [ -z "$PROJECT" ]; then
+  echo "Usage: shipyard rollback <project>"
+  exit 1
+fi
+
+load_project_config "$PROJECT"
+
+CURRENT_LINK="$PROJECT_DIR/current"
+RELEASES_DIR="$PROJECT_DIR/releases"
+LOG_FILE="/var/log/shipyard/$PROJECT.log"
+
+if [ ! -L "$CURRENT_LINK" ]; then
+  echo "Current link is missing or not a symlink."
+  exit 1
+fi
+
+CURRENT_RELEASE="$(readlink -f "$CURRENT_LINK")"
+
+PREVIOUS_RELEASE="$(
+  find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d \
+    | sort \
+    | grep -v "$CURRENT_RELEASE" \
+    | tail -n 1
+)"
+
+if [ -z "$PREVIOUS_RELEASE" ]; then
+  echo "No previous release found."
+  exit 1
+fi
+
+rm "$CURRENT_LINK"
+ln -s "$PREVIOUS_RELEASE" "$CURRENT_LINK"
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Rolled back: $PROJECT to $PREVIOUS_RELEASE" >> "$LOG_FILE"
+
+echo "Rollback successful:"
+echo "$PROJECT -> $PREVIOUS_RELEASE"

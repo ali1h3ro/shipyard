@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+COMMAND="${1:-}"
+
+show_help() {
+
+  echo "shipyard - small self-hosted deployment platform"
+
+  echo ""
+
+  echo "Usage:"
+
+  echo "  shipyard <command> [arguments]"
+
+  echo ""
+
+  echo "Commands:"
+
+  echo "  create <project>                         Create a new project structure and config"
+
+  echo "  nginx <project>                           Generate and enable Nginx config"
+
+  echo "  deploy <project> <artifact> <release>    Deploy an artifact to a project"
+
+  echo "  rollback <project>                       Roll back to the previous release"
+
+  echo "  status <project>                         Show project status"
+
+  echo "  list                                     List configured projects"
+
+  echo "  version                                  Show shipyard version"
+
+  echo "  doctor                                   Check Shipyard installation health"
+
+  echo "  help                                     Show this help message"
+
+  echo ""
+
+  echo "Examples:"
+
+  echo "  shipyard create portfolio"
+
+  echo "  shipyard deploy portfolio /tmp/site.tar.gz abc123"
+
+  echo "  shipyard status portfolio"
+
+  echo "  shipyard rollback portfolio"
+                                                                                                                }
+
+case "$COMMAND" in
+  create)
+    shift
+    /opt/shipyard/bin/create "$@"
+    ;;
+  deploy)
+    shift
+    /opt/shipyard/bin/deploy "$@"
+    ;;
+  list)
+    /opt/shipyard/bin/list
+    ;;
+  status)
+    shift
+    /opt/shipyard/bin/status "$@"
+    ;;
+  rollback)
+    shift
+    /opt/shipyard/bin/rollback "$@"
+    ;;
+  doctor)
+    /opt/shipyard/bin/doctor
+    ;;
+  version)
+
+    cat /opt/shipyard/VERSION
+    ;;
+  nginx)
+    shift
+    /opt/shipyard/bin/nginx "$@"
+    ;;
+help|-h|--help|"")
+
+    show_help
+    ;;
+  *)
+    echo "Unknown command: $COMMAND"
+    echo ""
+    show_help
+    exit 1
+    ;;
+esac

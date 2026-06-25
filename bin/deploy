@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/shipyard/lib/config.sh
+
+PROJECT="${1:-}"
+ARTIFACT_PATH="${2:-}"
+RELEASE_ID="${3:-}"
+
+if [ -z "$PROJECT" ] || [ -z "$ARTIFACT_PATH" ] || [ -z "$RELEASE_ID" ]; then
+  echo "Usage: shipyard deploy <project> <artifact-path> <release-id>"
+  exit 1
+fi
+
+load_project_config "$PROJECT"
+
+RELEASES_DIR="$PROJECT_DIR/releases"
+CURRENT_LINK="$PROJECT_DIR/current"
+RELEASE_DIR="$RELEASES_DIR/$RELEASE_ID"
+KEEP="${KEEP_RELEASES:-5}"
+TYPE="${TYPE:-static}"
+HEALTH_FILE="${HEALTH_CHECK_FILE:-index.html}"
+LOG_FILE="/var/log/shipyard/$PROJECT.log"
+
+if [ ! -f "$ARTIFACT_PATH" ]; then
+  echo "Artifact not found: $ARTIFACT_PATH"
+  exit 1
+fi
+
+mkdir -p "$RELEASES_DIR" "$RELEASE_DIR"
+
+{
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy started: $PROJECT $RELEASE_ID"
+} >> "$LOG_FILE"
+
+tar -xzf "$ARTIFACT_PATH" -C "$RELEASE_DIR"
+
+if [ "$TYPE" = "static" ] && [ ! -f "$RELEASE_DIR/$HEALTH_FILE" ]; then
+  echo "Health check failed: $HEALTH_FILE not found"
+  rm -rf "$RELEASE_DIR"
+  exit 1
+fi
+
+if [ -L "$CURRENT_LINK" ]; then
+  rm "$CURRENT_LINK"
+elif [ -d "$CURRENT_LINK" ]; then
+  rm -rf "$CURRENT_LINK"
+fi
+
+ln -s "$RELEASE_DIR" "$CURRENT_LINK"
+
+find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d \
+  | sort \
+  | head -n "-$KEEP" \
+  | xargs -r rm -rf
+
+rm -f "$ARTIFACT_PATH"
+
+{
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy successful: $PROJECT $RELEASE_ID"
+} >> "$LOG_FILE"
+
+echo "Deployment successful: $PROJECT $RELEASE_ID"

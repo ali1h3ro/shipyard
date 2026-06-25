@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FAILED=0
+
+check_command() {
+  local command="$1"
+
+  if command -v "$command" >/dev/null 2>&1; then
+    echo "✓ $command"
+  else
+    echo "✗ $command missing"
+    FAILED=1
+  fi
+}
+
+check_path() {
+  local path="$1"
+
+  if [ -e "$path" ]; then
+    echo "✓ $path"
+  else
+    echo "✗ $path missing"
+    FAILED=1
+  fi
+}
+
+echo "Shipyard Health Check"
+echo ""
+
+check_command bash
+check_command tar
+check_command sed
+check_command find
+check_command nginx
+
+echo ""
+
+check_path /opt/shipyard
+check_path /etc/deploy-sites
+check_path /var/log/shipyard
+check_path /usr/local/bin/shipyard
+
+echo ""
+
+if command -v nginx >/dev/null 2>&1; then
+  if sudo nginx -t >/dev/null 2>&1; then
+    echo "✓ nginx configuration valid"
+  else
+    echo "✗ nginx configuration invalid"
+    FAILED=1
+  fi
+fi
+
+echo ""
+
+if [ "$FAILED" -eq 0 ]; then
+  echo "Everything looks good."
+else
+  echo "Some checks failed."
+  exit 1
+fi
