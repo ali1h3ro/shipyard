@@ -132,7 +132,7 @@ bash shipyard doctor
 
 # Project Types
 
-Shipyard currently supports three project types.
+Configurable project types with extensible deployment templates
 
 | Type | Description |
 |------|-------------|
