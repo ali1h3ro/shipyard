@@ -3,6 +3,7 @@ set -euo pipefail
 
 PROJECT="${1:-}"
 DOMAIN="_"
+TYPE="static"
 
 shift || true
 
@@ -10,6 +11,10 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --domain)
       DOMAIN="${2:-}"
+      shift 2
+      ;;
+    --type)
+      TYPE="${2:-}"
       shift 2
       ;;
     *)
@@ -20,7 +25,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$PROJECT" ]; then
-  echo "Usage: shipyard create <project> [--domain example.com]"
+  echo "Usage: shipyard create <project> [--domain example.com] [--type static|laravel|node]"
   exit 1
 fi
 
@@ -29,11 +34,28 @@ if [[ ! "$PROJECT" =~ ^[a-zA-Z0-9_-]+$ ]]; then
   exit 1
 fi
 
+case "$TYPE" in
+  static|laravel|node)
+    ;;
+  *)
+    echo "Unsupported type: $TYPE"
+    echo "Supported types: static, laravel, node"
+    exit 1
+    ;;
+esac
+
 PROJECT_DIR="/var/www/sites/$PROJECT"
 CONFIG_FILE="/etc/deploy-sites/$PROJECT.conf"
+
 NGINX_AVAILABLE="/etc/nginx/sites-available/$PROJECT"
 NGINX_ENABLED="/etc/nginx/sites-enabled/$PROJECT"
-TEMPLATE="/opt/shipyard/templates/nginx/static.conf"
+
+TEMPLATE="/opt/shipyard/templates/nginx/$TYPE.conf"
+
+if [ ! -f "$TEMPLATE" ]; then
+  echo "Template not found: $TEMPLATE"
+  exit 1
+fi
 
 if [ -e "$PROJECT_DIR" ]; then
   echo "Project directory already exists: $PROJECT_DIR"
@@ -52,7 +74,7 @@ cat > "$CONFIG_FILE" <<EOF
 PROJECT_NAME="$PROJECT"
 PROJECT_DIR="$PROJECT_DIR"
 KEEP_RELEASES=5
-TYPE="static"
+TYPE="$TYPE"
 HEALTH_CHECK_FILE="index.html"
 DOMAIN="$DOMAIN"
 EOF
@@ -70,8 +92,21 @@ fi
 nginx -t
 sudo systemctl reload nginx
 
-echo "Project created: $PROJECT"
-echo "Directory: $PROJECT_DIR"
-echo "Config: $CONFIG_FILE"
-echo "Nginx: $NGINX_AVAILABLE"
-echo "Domain: $DOMAIN"
+echo ""
+echo "✔ Project created successfully"
+echo ""
+echo "Project"
+echo "  Name   : $PROJECT"
+echo "  Type   : $TYPE"
+echo "  Domain : $DOMAIN"
+echo ""
+echo "Paths"
+echo "  Directory : $PROJECT_DIR"
+echo "  Config    : $CONFIG_FILE"
+echo "  Nginx     : $NGINX_AVAILABLE"
+echo ""
+echo "Next steps"
+echo "  1. Point your domain DNS to this server"
+echo "  2. Add your GitHub Actions deployment workflow"
+echo "  3. Deploy with:"
+echo "     shipyard deploy $PROJECT /tmp/artifact.tar.gz <release-id>"

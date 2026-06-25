@@ -13,7 +13,7 @@ fi
 load_project_config "$PROJECT"
 
 DOMAIN="${DOMAIN:-_}"
-TEMPLATE="/opt/shipyard/templates/nginx/static.conf"
+TEMPLATE="/opt/shipyard/templates/nginx/${TYPE:-static}.conf"
 NGINX_AVAILABLE="/etc/nginx/sites-available/$PROJECT"
 NGINX_ENABLED="/etc/nginx/sites-enabled/$PROJECT"
 
