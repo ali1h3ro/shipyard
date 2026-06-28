@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOMAIN="${1:-}"
+EXPECTED_IP="${2:-}"
+
+if [ -z "$DOMAIN" ] || [ -z "$EXPECTED_IP" ]; then
+  echo "Usage: shipyard dns-check <domain> <expected-ip>"
+  exit 1
+fi
+
+RESULT="$(dig @1.1.1.1 +short "$DOMAIN" | tail -n 1)"
+
+echo "Domain: $DOMAIN"
+echo "Expected: $EXPECTED_IP"
+echo "Resolved: ${RESULT:-none}"
+
+if [ "$RESULT" = "$EXPECTED_IP" ]; then
+  echo "✓ DNS is correct"
+else
+  echo "✗ DNS mismatch"
+  exit 1
+fi

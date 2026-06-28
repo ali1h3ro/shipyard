@@ -29,6 +29,8 @@ show_help() {
 
   echo "  list                                     List configured projects"
 
+  echo "  dns-check <domain> <ip>                  Verify DNS resolves to expected IP"
+
   echo "  version                                  Show shipyard version"
 
   echo "  doctor                                   Check Shipyard installation health"
@@ -70,6 +72,13 @@ case "$COMMAND" in
     ;;
   doctor)
     /opt/shipyard/bin/doctor
+    ;;
+  dns-check)
+
+    shift
+
+    /opt/shipyard/bin/dns-check "$@"
+
     ;;
   version)
 
